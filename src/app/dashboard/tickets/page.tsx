@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, ChevronRight, Plus, X, Filter, Eye, MapPin, Calendar, Clock, Printer, Check, GitBranch, Edit, Trash2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Plus, X, Filter, Eye, MapPin, Calendar, Clock, Printer, Check, GitBranch, Edit, Trash2, Star } from 'lucide-react';
 import { useGetTicketsQuery, Ticket, useUpdateTicketMutation, useDeleteTicketMutation, useGetTicketsByCustomerQuery } from '@/store/services/ticketApi';
 import { useCreateReprintRequestMutation } from '@/store/services/reprintRequestApi';
 import { useGetWorkflowsQuery, useInitializeTicketWorkflowMutation } from '@/store/services/workflowApi';
+import { ReviewDialog } from '@/components/tickets/review-dialog';
+import { ReviewDisplay } from '@/components/tickets/review-display';
 import {
   Table,
   TableBody,
@@ -103,6 +105,8 @@ export default function TicketsPage() {
   const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false);
   const [workflowTicket, setWorkflowTicket] = useState<Ticket | null>(null);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [reviewTicket, setReviewTicket] = useState<Ticket | null>(null);
 
   // New filter state
   const [newFilterField, setNewFilterField] = useState('');
@@ -402,6 +406,11 @@ export default function TicketsPage() {
     setIsWorkflowDialogOpen(true);
   };
 
+  const openReviewDialog = (ticket: Ticket) => {
+    setReviewTicket(ticket);
+    setIsReviewDialogOpen(true);
+  };
+
   const workflows = workflowsData?.data || [];
 
   const currentPage = Math.floor(offset / limit) + 1;
@@ -667,7 +676,7 @@ export default function TicketsPage() {
                     <p className="text-xs text-slate-400 mb-3">
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
@@ -677,6 +686,17 @@ export default function TicketsPage() {
                         <Eye className="w-4 h-4" />
                         View
                       </Button>
+                      {(ticket.status === 'Resolved' || ticket.status === 'Closed') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 gap-2 hover:bg-yellow-50 hover:border-yellow-300"
+                          onClick={() => openReviewDialog(ticket)}
+                        >
+                          <Star className="w-4 h-4" />
+                          Rate
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -782,6 +802,17 @@ export default function TicketsPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
+                            {(ticket.status === 'Resolved' || ticket.status === 'Closed') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openReviewDialog(ticket)}
+                                title="Rate Ticket"
+                                className="hover:text-yellow-600"
+                              >
+                                <Star className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -985,6 +1016,11 @@ export default function TicketsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Review Display for Resolved/Closed Tickets */}
+              {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
+                <ReviewDisplay ticketId={selectedTicket.id} />
+              )}
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-0">
@@ -996,6 +1032,18 @@ export default function TicketsPage() {
               <X className="w-4 h-4" />
               Close
             </Button>
+            {selectedTicket && (selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
+              <Button
+                onClick={() => {
+                  openReviewDialog(selectedTicket);
+                  setSelectedTicket(null);
+                }}
+                className="gap-2 bg-yellow-600 hover:bg-yellow-700"
+              >
+                <Star className="w-4 h-4" />
+                Rate Ticket
+              </Button>
+            )}
             <Button
               onClick={() => {
                 if (selectedTicket) openWorkflowDialog(selectedTicket);
@@ -1299,6 +1347,20 @@ export default function TicketsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Review Dialog */}
+      {reviewTicket && (
+        <ReviewDialog
+          open={isReviewDialogOpen}
+          onClose={() => {
+            setIsReviewDialogOpen(false);
+            setReviewTicket(null);
+          }}
+          ticketId={reviewTicket.id}
+          customerId={reviewTicket.customer_id}
+          ticketTitle={reviewTicket.subject}
+        />
+      )}
     </div>
   );
 }

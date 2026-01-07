@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
+import FloatingChatWidget from '@/components/chat/floating-chat-widget';
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,7 @@ export default function DashboardLayout({
           <main className="flex-1 overflow-y-auto p-4 pt-16 md:pt-4 md:p-6">{children}</main>
         </div>
       </div>
+      <FloatingChatWidget />
     </ProtectedRoute>
   );
 }

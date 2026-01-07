@@ -16,6 +16,9 @@ import {
   ClipboardCheck,
   TrendingUp,
   Plus,
+  MessageCircle,
+  Star,
+  BarChart3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -34,6 +37,11 @@ const menuItems = [
     href: '/dashboard',
   },
   {
+    title: 'Messages',
+    icon: MessageCircle,
+    href: '/dashboard/chat',
+  },
+  {
     title: 'Create Ticket',
     icon: Plus,
     href: '/dashboard/create-ticket',
@@ -42,6 +50,16 @@ const menuItems = [
     title: 'Tickets',
     icon: FileText,
     href: '/dashboard/tickets',
+  },
+  {
+    title: 'Reviews',
+    icon: Star,
+    href: '/dashboard/reviews',
+  },
+  {
+    title: 'Reports',
+    icon: BarChart3,
+    href: '/dashboard/reports',
   },
   {
     title: 'Workflows',
