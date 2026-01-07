@@ -1,0 +1,9 @@
+
+services:
+  tms-web:
+    image: ghcr.io/rukshan2000/tms-portal:${VERSION}
+    container_name: tms-portal
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./envs/temp.app.env

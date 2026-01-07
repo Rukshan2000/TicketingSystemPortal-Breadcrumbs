@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Receipt - Temple of the Tooth Relic</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+                padding: 2mm;
+            }
+            .no-print {
+                display: none;
+            }
+            @page {
+                margin: 0;
+                size: 100mm auto;
+                orphans: 0;
+                widows: 0;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 100mm;
+            margin: 0;
+            padding: 3mm;
+            background: white;
+            color: black;
+            font-size: 11pt;
+            line-height: 1.2;
+        }
+
+        .receipt {
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1mm;
+        }
+
+        .sinhala {
+            font-size: 11pt;
+            margin: 1mm 0;
+        }
+
+        .logo-line {
+            font-weight: bold;
+            font-size: 14pt;
+            margin: 0.5mm 0;
+        }
+
+        .temple-name {
+            font-weight: bold;
+            font-size:9pt;
+            margin: 3mm 0;
+            letter-spacing: 0.5px;
+        }
+
+        .address-line {
+            font-weight: bold;
+            font-size: 11pt;
+            margin: 0.5mm 0;
+        }
+
+        .contact-line {
+            font-size: 10pt;
+            text-align: left;
+            margin: 0.5mm 0;
+        }
+
+        .divider {
+            width: 100%;
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 0.8mm 0;
+            padding: 0;
+        }
+
+        .info-line {
+            font-size: 10pt;
+            text-align: left;
+            margin: 0.2mm 0;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .amount-line {
+            font-size: 10pt;
+            text-align: left;
+            margin: 0.2mm 0;
+            padding: 0;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .ticket-header {
+            font-weight: bold;
+            font-size: 10pt;
+            text-align: center;
+            margin: 0.5mm 0;
+        }
+
+        .qr-container {
+            text-align: center;
+            margin: 2mm 0;
+            padding: 1mm 0;
+        }
+
+        #qrcode {
+            margin: 0 auto;
+            display: block;
+        }
+
+        .page-num {
+            text-align: right;
+            font-size: 10pt;
+            margin-top: 2mm;
+            margin-bottom: 3mm;
+            padding-bottom: 2mm;
+        }
+
+        .logo-img {
+            max-width: 35mm;
+            height: auto;
+            margin: 0 auto 1.5mm;
+            display: block;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14pt;
+            z-index: 1000;
+        }
+
+        .print-button:hover {
+            background: #45a049;
+        }
+
+        .ticket-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5mm;
+            font-size: 10pt;
+            text-align: left;
+            margin: 0.2mm 0;
+            padding: 0;
+        }
+
+        .ticket-grid-header {
+            font-weight: bold;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5mm;
+            font-size: 10pt;
+            margin: 0.2mm 0;
+            padding: 0;
+        }
+
+        .ticket-col {
+            text-align: left;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5mm;
+            font-size: 10pt;
+            text-align: left;
+            margin: 0.2mm 0;
+            padding: 0;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">🖨️ Print Receipt</button>
+    
+    <div class="receipt">
+        <div class="header">
+            <img src="/src/assets/ticket.jpg" alt="Sri Dalada Maligawa Logo" class="logo-img">
+            <div class="logo-line">SRI DALADA MALIGAWA</div>
+        </div>
+
+
+        <div class="center">
+            <div class="address-line">TEMPLE OF THE TOOTH RELIC</div>
+            <div class="address-line">KANDY, SRI LANKA</div>
+
+        <div class="address-line">TEL  : +94812234226</div>
+        <div class="address-line">EMAIL: info@sridaladamaligawa.lk</div>
+        <div class="address-line">WEB  : www.sridaladamaligawa.lk</div>
+ </div>
+        <hr class="divider">
+
+        <div class="info-grid">
+            <div>DATE        :19-DEC-2025</div>
+            <div>TIME     :14:51 HRS</div>
+        </div>
+        <div class="info-grid">
+            <div>TERMINAL ID :T0001</div>
+            <div>LOCATION :Main Entrance</div>
+        </div>
+        <div class="info-line">NO. TICKETS :01</div>
+        <div class="ticket-grid">
+            <div class="ticket-col">TOTAL AMOUNT</div>
+            <div class="ticket-col">LKR</div>
+            <div class="ticket-col">2,000.00</div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="ticket-grid">
+            <div class="ticket-col">TOTAL DEP</div>
+            <div class="ticket-col">LKR</div>
+            <div class="ticket-col">2,000.00</div>
+        </div>
+        <div class="ticket-grid">
+            <div class="ticket-col">BALANCE</div>
+            <div class="ticket-col">LKR</div>
+            <div class="ticket-col">0.00</div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="info-line">TRACE NO    :25121914515901</div>
+        <div class="info-line">REFERENCE NO:T000125121914515901202875</div>
+
+        <hr class="divider">
+
+        <div class="ticket-header bold">ENTRANCE TICKET FOR FOREIGNERS - ONE PERSON ONLY</div>
+
+        <hr class="divider">
+
+        <div class="ticket-grid-header">
+            <div class="ticket-col">TICKET AMOUNT P/P</div>
+            <div class="ticket-col">#TICKETS</div>
+            <div class="ticket-col">TOTAL AMOUNT:</div>
+        </div>
+        <div class="ticket-grid">
+            <div class="ticket-col">2000.00 LKR</div>
+            <div class="ticket-col">01</div>
+            <div class="ticket-col">2000.00 LKR</div>
+        </div>
+
+        <div class="qr-container">
+            <canvas id="qrcode"></canvas>
+        </div>
+
+        <div class="page-num">01/01</div>
+    </div>
+
+    <script>
+        // Generate QR code with the reference number
+        window.onload = function() {
+            var qr = new QRious({
+                element: document.getElementById('qrcode'),
+                value: 'T000125121914515901202875',
+                size: 120,
+                level: 'M'
+            });
+        };
+    </script>
+</body>
+</html>
