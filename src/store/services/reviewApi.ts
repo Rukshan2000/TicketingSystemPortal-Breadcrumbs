@@ -28,7 +28,11 @@ export const reviewApi = createApi({
       query: (body) => ({
         url: '/reviews',
         method: 'POST',
-        body,
+        body: {
+          ...body,
+          review_text: body.comment,
+          comment: undefined,
+        },
       }),
       invalidatesTags: ['Review', 'ReviewStats'],
     }),
@@ -36,6 +40,29 @@ export const reviewApi = createApi({
     // Get all reviews (paginated)
     getReviews: builder.query<ReviewsResponse, { page?: number; limit?: number }>({
       query: ({ page = 1, limit = 10 }) => `/reviews?page=${page}&limit=${limit}`,
+      transformResponse: (response: any) => {
+        const reviews = response.data?.map((review: any) => ({
+          ...review,
+          comment: review.review_text,
+          customer_name: review.customer_name,
+          ticket_title: review.ticket_subject,
+          status: review.status?.toUpperCase(),
+        })) || [];
+        
+        const total = response.pagination?.total || 0;
+        const limit = response.pagination?.limit || 10;
+        const offset = response.pagination?.offset || 0;
+        const page = Math.floor(offset / limit) + 1;
+        const totalPages = Math.ceil(total / limit);
+        
+        return {
+          reviews,
+          total,
+          page,
+          limit,
+          totalPages,
+        };
+      },
       providesTags: ['Review'],
     }),
 
@@ -48,6 +75,13 @@ export const reviewApi = createApi({
     // Get review for a ticket
     getReviewByTicketId: builder.query<Review, number>({
       query: (ticketId) => `/reviews/ticket/${ticketId}`,
+      transformResponse: (response: any) => ({
+        ...response.data,
+        comment: response.data?.review_text,
+        customer_name: response.data?.customer_name,
+        ticket_title: response.data?.ticket_subject,
+        status: response.data?.status?.toUpperCase(),
+      }),
       providesTags: (result, error, ticketId) => [{ type: 'Review', id: `ticket-${ticketId}` }],
     }),
 
@@ -55,6 +89,29 @@ export const reviewApi = createApi({
     getReviewsByCustomer: builder.query<ReviewsResponse, { customerId: number; page?: number; limit?: number }>({
       query: ({ customerId, page = 1, limit = 10 }) =>
         `/reviews/customer/${customerId}?page=${page}&limit=${limit}`,
+      transformResponse: (response: any) => {
+        const reviews = response.data?.map((review: any) => ({
+          ...review,
+          comment: review.review_text,
+          customer_name: review.customer_name,
+          ticket_title: review.ticket_subject,
+          status: review.status?.toUpperCase(),
+        })) || [];
+        
+        const total = response.pagination?.total || 0;
+        const limit = response.pagination?.limit || 10;
+        const offset = response.pagination?.offset || 0;
+        const page = Math.floor(offset / limit) + 1;
+        const totalPages = Math.ceil(total / limit);
+        
+        return {
+          reviews,
+          total,
+          page,
+          limit,
+          totalPages,
+        };
+      },
       providesTags: ['Review'],
     }),
 
@@ -62,6 +119,29 @@ export const reviewApi = createApi({
     getReviewsByRating: builder.query<ReviewsResponse, { rating: 1 | 2 | 3 | 4 | 5; page?: number; limit?: number }>({
       query: ({ rating, page = 1, limit = 10 }) =>
         `/reviews/rating/${rating}?page=${page}&limit=${limit}`,
+      transformResponse: (response: any) => {
+        const reviews = response.data?.map((review: any) => ({
+          ...review,
+          comment: review.review_text,
+          customer_name: review.customer_name,
+          ticket_title: review.ticket_subject,
+          status: review.status?.toUpperCase(),
+        })) || [];
+        
+        const total = response.pagination?.total || 0;
+        const limit = response.pagination?.limit || 10;
+        const offset = response.pagination?.offset || 0;
+        const page = Math.floor(offset / limit) + 1;
+        const totalPages = Math.ceil(total / limit);
+        
+        return {
+          reviews,
+          total,
+          page,
+          limit,
+          totalPages,
+        };
+      },
       providesTags: ['Review'],
     }),
 
@@ -69,6 +149,29 @@ export const reviewApi = createApi({
     getReviewsByStatus: builder.query<ReviewsResponse, { status: string; page?: number; limit?: number }>({
       query: ({ status, page = 1, limit = 10 }) =>
         `/reviews/status/${status}?page=${page}&limit=${limit}`,
+      transformResponse: (response: any) => {
+        const reviews = response.data?.map((review: any) => ({
+          ...review,
+          comment: review.review_text,
+          customer_name: review.customer_name,
+          ticket_title: review.ticket_subject,
+          status: review.status?.toUpperCase(),
+        })) || [];
+        
+        const total = response.pagination?.total || 0;
+        const limit = response.pagination?.limit || 10;
+        const offset = response.pagination?.offset || 0;
+        const page = Math.floor(offset / limit) + 1;
+        const totalPages = Math.ceil(total / limit);
+        
+        return {
+          reviews,
+          total,
+          page,
+          limit,
+          totalPages,
+        };
+      },
       providesTags: ['Review'],
     }),
 
@@ -83,7 +186,11 @@ export const reviewApi = createApi({
       query: ({ id, data }) => ({
         url: `/reviews/${id}`,
         method: 'PUT',
-        body: data,
+        body: {
+          ...data,
+          review_text: data.comment,
+          comment: undefined,
+        },
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: 'Review', id },

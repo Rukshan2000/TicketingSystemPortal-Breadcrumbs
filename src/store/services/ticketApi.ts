@@ -267,12 +267,9 @@ export const {
   useGetTicketsQuery,
   useGetTicketCountQuery,
   useGetTicketByIdQuery,
-  useGetTicketByTraceNoQuery,
-  useSearchTicketsByDateRangeQuery,
+  useSearchTicketsQuery,
   useGetTicketsByCustomerQuery,
   useCreateTicketMutation,
-  useCreateTicketWithImageMutation,
   useUpdateTicketMutation,
   useDeleteTicketMutation,
-  useRequestReprintMutation,
 } = ticketApi;

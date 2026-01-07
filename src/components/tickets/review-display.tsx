@@ -114,7 +114,7 @@ export function ReviewDisplay({ ticketId }: ReviewDisplayProps) {
         {review.comment && (
           <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-              "{review.comment}"
+              &ldquo;{review.comment}&rdquo;
             </p>
           </div>
         )}

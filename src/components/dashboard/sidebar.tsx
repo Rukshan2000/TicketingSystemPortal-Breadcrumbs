@@ -45,11 +45,11 @@ export function Sidebar() {
       icon: LayoutDashboard,
       href: '/dashboard',
     },
-    {
+    ...(hasPermission('allow chats') ? [{
       title: 'Messages',
       icon: MessageCircle,
       href: '/dashboard/chat',
-    },
+    }] : []),
     ...(hasPermission('create ticket') ? [{
       title: 'Create Ticket',
       icon: Plus,
@@ -65,11 +65,11 @@ export function Sidebar() {
       icon: Star,
       href: '/dashboard/reviews',
     },
-    {
+    ...(hasPermission('view ticket reports') || hasPermission('view user reports') || hasPermission('view workflow reports') || hasPermission('view review reports') || hasPermission('create custom reports') ? [{
       title: 'Reports',
       icon: BarChart3,
       href: '/dashboard/reports',
-    },
+    }] : []),
     {
       title: 'Workflows',
       icon: GitBranch,

@@ -244,6 +244,9 @@ export default function ReviewsPage() {
               </label>
               <Select value={ratingFilter} onValueChange={(value) => {
                 setRatingFilter(value);
+                if (value !== 'all') {
+                  setStatusFilter('all'); // Reset status filter when rating filter is selected
+                }
                 setPage(1);
               }}>
                 <SelectTrigger>
@@ -267,6 +270,9 @@ export default function ReviewsPage() {
               </label>
               <Select value={statusFilter} onValueChange={(value) => {
                 setStatusFilter(value);
+                if (value !== 'all') {
+                  setRatingFilter('all'); // Reset rating filter when status filter is selected
+                }
                 setPage(1);
               }}>
                 <SelectTrigger>
@@ -396,7 +402,7 @@ export default function ReviewsPage() {
                       {review.comment && (
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
                           <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            "{review.comment}"
+                            &ldquo;{review.comment}&rdquo;
                           </p>
                         </div>
                       )}
