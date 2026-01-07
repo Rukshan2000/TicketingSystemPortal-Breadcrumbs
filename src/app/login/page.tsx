@@ -76,7 +76,7 @@ export default function LoginPage() {
       if (response.success && response.data) {
         // Check if user has "portal" permission (id: 9)
         const hasPortalPermission = (response.data.user as any).permissions?.some(
-          (permission: any) => permission.id === 9 && permission.name === 'portal'
+          (permission: any) =>  permission.name === 'portal'
         );
 
         if (!hasPortalPermission) {

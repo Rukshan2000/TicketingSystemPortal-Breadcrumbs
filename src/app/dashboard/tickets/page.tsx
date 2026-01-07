@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, ChevronRight, Plus, X, Filter, Eye, MapPin, Calendar, Clock, Printer, Check, GitBranch, Edit, Trash2, Star } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Plus, X, Filter, Eye, MapPin, Calendar, Clock, Printer, Check, GitBranch, Edit, Trash2, Star, MoreHorizontal } from 'lucide-react';
 import { useGetTicketsQuery, Ticket, useUpdateTicketMutation, useDeleteTicketMutation, useGetTicketsByCustomerQuery } from '@/store/services/ticketApi';
 import { useCreateReprintRequestMutation } from '@/store/services/reprintRequestApi';
 import { useGetWorkflowsQuery, useInitializeTicketWorkflowMutation } from '@/store/services/workflowApi';
 import { ReviewDialog } from '@/components/tickets/review-dialog';
 import { ReviewDisplay } from '@/components/tickets/review-display';
+import { hasPermission } from '@/lib/permissions';
 import {
   Table,
   TableBody,
@@ -37,6 +38,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Filter field options
 const FILTER_FIELDS = [
@@ -108,6 +115,16 @@ export default function TicketsPage() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [reviewTicket, setReviewTicket] = useState<Ticket | null>(null);
 
+  // Check permissions
+  const canViewAllTickets = hasPermission('view all tickets');
+  const canUpdateTicket = hasPermission('update ticket');
+  const canDeleteTicket = hasPermission('delete ticket');
+  const canAssignWorkflow = hasPermission('assign workflow to ticket');
+  const canAddReviews = hasPermission('add reviews');
+
+  // Set default filter mode based on permissions
+  const defaultFilterMode = canViewAllTickets ? 'all' : 'my';
+
   // New filter state
   const [newFilterField, setNewFilterField] = useState('');
   const [newFilterOperator, setNewFilterOperator] = useState('');
@@ -123,8 +140,8 @@ export default function TicketsPage() {
     { skip: !user?.id }
   );
 
-  const ticketsData_toUse = filterMode === 'my' ? customerTicketsData : ticketsData;
-  const isLoading_final = filterMode === 'my' ? isLoadingCustomerTickets : isLoading;
+  const ticketsData_toUse = defaultFilterMode === 'my' ? customerTicketsData : ticketsData;
+  const isLoading_final = defaultFilterMode === 'my' ? isLoadingCustomerTickets : isLoading;
 
   const { data: workflowsData } = useGetWorkflowsQuery({ active: true });
   const [initializeWorkflow, { isLoading: isInitializingWorkflow }] = useInitializeTicketWorkflowMutation();
@@ -432,24 +449,10 @@ export default function TicketsPage() {
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show:</span>
         <div className="flex gap-2">
           <Button
-            variant={filterMode === 'all' ? 'default' : 'outline'}
-            onClick={() => {
-              setFilterMode('all');
-              setOffset(0);
-            }}
+            variant="default"
             className="transition-all"
           >
-            All Tickets
-          </Button>
-          <Button
-            variant={filterMode === 'my' ? 'default' : 'outline'}
-            onClick={() => {
-              setFilterMode('my');
-              setOffset(0);
-            }}
-            className="transition-all"
-          >
-            My Tickets
+            {canViewAllTickets ? 'All Tickets' : 'My Tickets'}
           </Button>
         </div>
       </div>
@@ -615,7 +618,7 @@ export default function TicketsPage() {
         <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base sm:text-lg">
-              All Tickets 
+              {canViewAllTickets ? 'All Tickets' : 'My Tickets'} 
               <span className="text-slate-500 font-normal ml-2">
                 ({filteredTickets.length}{filters.length > 0 ? ' filtered' : ''})
               </span>
@@ -751,8 +754,6 @@ export default function TicketsPage() {
                       <TableHead className="font-semibold">Category</TableHead>
                       <TableHead className="font-semibold">Priority</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Customer ID</TableHead>
-                      <TableHead className="font-semibold">Order ID</TableHead>
                       <TableHead className="font-semibold">Created At</TableHead>
                       <TableHead className="font-semibold text-center">Actions</TableHead>
                     </TableRow>
@@ -787,64 +788,83 @@ export default function TicketsPage() {
                             {ticket.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm font-medium">{ticket.customer_id}</TableCell>
-                        <TableCell className="text-sm">{ticket.order_id || '-'}</TableCell>
                         <TableCell className="text-sm text-slate-500">
                           {new Date(ticket.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-1 min-w-[120px]">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => setSelectedTicket(ticket)}
                               title="View Details"
+                              className="flex-shrink-0"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {(ticket.status === 'Resolved' || ticket.status === 'Closed') && (
+                            {canAddReviews && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openReviewDialog(ticket)}
                                 title="Rate Ticket"
-                                className="hover:text-yellow-600"
+                                className={`hover:text-yellow-600 flex-shrink-0 ${!(ticket.status === 'Resolved' || ticket.status === 'Closed') ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                disabled={!(ticket.status === 'Resolved' || ticket.status === 'Closed')}
                               >
                                 <Star className="w-4 h-4" />
                               </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openWorkflowDialog(ticket)}
-                              title="Assign Workflow"
-                            >
-                              <GitBranch className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditTicket(ticket);
-                                setEditStatus(ticket.status);
-                                setEditPriority(ticket.priority);
-                              }}
-                              title="Edit Ticket"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setDeleteTicket(ticket);
-                                setShowDeleteConfirm(true);
-                              }}
-                              title="Delete Ticket"
-                              className="hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {canAssignWorkflow && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWorkflowDialog(ticket)}
+                                title="Assign Workflow"
+                                className="flex-shrink-0"
+                              >
+                                <GitBranch className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {(canUpdateTicket || canDeleteTicket) && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    title="More Actions"
+                                    className="flex-shrink-0"
+                                  >
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {canUpdateTicket && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditTicket(ticket);
+                                        setEditStatus(ticket.status);
+                                        setEditPriority(ticket.priority);
+                                      }}
+                                    >
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                  )}
+                                  {canDeleteTicket && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setDeleteTicket(ticket);
+                                        setShowDeleteConfirm(true);
+                                      }}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -935,7 +955,8 @@ export default function TicketsPage() {
             </DialogTitle>
           </DialogHeader>
           {selectedTicket && (
-            <div className="space-y-4">
+            <div className="max-h-[600px] overflow-y-auto">
+              <div className="space-y-4">
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                 <p className="text-xs text-slate-500 mb-1">Subject</p>
                 <p className="text-sm font-semibold">{selectedTicket.subject}</p>
@@ -1022,6 +1043,7 @@ export default function TicketsPage() {
                 <ReviewDisplay ticketId={selectedTicket.id} />
               )}
             </div>
+            </div>
           )}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
@@ -1032,7 +1054,7 @@ export default function TicketsPage() {
               <X className="w-4 h-4" />
               Close
             </Button>
-            {selectedTicket && (selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
+            {selectedTicket && canAddReviews && (selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
               <Button
                 onClick={() => {
                   openReviewDialog(selectedTicket);
@@ -1044,6 +1066,7 @@ export default function TicketsPage() {
                 Rate Ticket
               </Button>
             )}
+             {canAssignWorkflow && (
             <Button
               onClick={() => {
                 if (selectedTicket) openWorkflowDialog(selectedTicket);
@@ -1053,6 +1076,7 @@ export default function TicketsPage() {
               <GitBranch className="w-4 h-4" />
               Assign Workflow
             </Button>
+          )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
