@@ -26,8 +26,8 @@ import { useDispatch } from 'react-redux';
 import { logout } from '@/store/features/authSlice';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import LogoLg from '@/assets/logo_2.png';
-import LogoSm from '@/assets/logo_1.png';
+import LogoLg from '@/assets/f2.jpg';
+import LogoSm from '@/assets/f2.jpg';
 import { hasPermission } from '@/lib/permissions';
 
 
@@ -171,14 +171,17 @@ export function Sidebar() {
             priority
           />
         ) : (
-          <Image
-            src={LogoLg}
-            alt="Logo"
-            width={200}
-            height={80}
-            className="w-auto h-auto max-w-full"
-            priority
-          />
+          <div className="flex items-center gap-3">
+            <Image
+              src={LogoLg}
+              alt="Logo"
+              width={10}
+              height={10}
+              className="w-10 h-10 object-contain"
+              priority
+            />
+            <span className="font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">Support Ticketing</span>
+          </div>
         )}
       </div>
 

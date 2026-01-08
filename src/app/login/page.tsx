@@ -4,6 +4,7 @@ import Image from 'next/image';
 import tmsLogo from '@/assets/text.png';
 import Logo from '@/assets/logo.jpg';
 import bgImage from '@/assets/bg.jpeg';
+import phone from '@/assets/phone.jpg';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -14,7 +15,7 @@ import { useLoginMutation } from '@/store/services/authApi';
 import { useAppDispatch, RootState } from '@/store';
 import { setCredentials } from '@/store/features/authSlice';
 import { Button } from '@/components/ui/button';
-import LogoLg from '@/assets/logo_2.png';
+import LogoLg from '@/assets/f2.jpg';
 
 import {
   Card,
@@ -129,82 +130,91 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        backgroundImage: `url(${bgImage.src})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        backgroundBlendMode: 'overlay',
-      }}
+      className="min-h-screen flex items-center justify-center bg-white relative overflow-hidden"
     >
-      <Card className="w-full max-w-md shadow-xl backdrop-blur-md bg-white/20 border border-white/20">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <Image
-              src={LogoLg}
-              alt="TMS Portal Logo"
-              width={1000}
-              height={100}
-              priority
-              className="w-auto h-auto"
-            />
-          </div>
-                   
-          <CardDescription className="text-base">
-Sign In          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="admin@example.com"
-                        type="email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+      {/* Left Side - Image */}
+      <div className="hidden lg:flex w-1/2 h-screen items-center justify-center bg-white p-8">
+        <div className="relative w-full h-full max-w-md">
+          <Image
+            src={phone}
+            alt="Phone"
+            fill
+            priority
+            className="object-contain"
+          />
+        </div>
+      </div>
+
+      {/* Right Side - Login Card */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm shadow-2xl border-0 bg-white rounded-2xl">
+          <CardHeader className="space-y-3 text-center pb-8">
+            <div className="flex justify-center mb-2">
+              <Image
+                src={LogoLg}  
+                alt="TMS Portal Logo"
+                width={50}
+                height={100}
+                priority
+                className="w-auto h-auto max-w-[10rem]"
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="••••••••"
-                        type="password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            </div>
+            <CardDescription className="text-lg font-semibold text-gray-700">
+              Sign In
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="admin@example.com"
+                          type="email"
+                          className="h-11 rounded-lg border-gray-200"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          className="h-11 rounded-lg border-gray-200"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {error && (
+                  <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg border border-red-200">
+                    {error}
+                  </div>
                 )}
-              />
-              {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
-          </Form>
-   
-        </CardContent>
-      </Card>
+                <Button type="submit" className="w-full h-11 rounded-lg font-semibold" disabled={isLoading}>
+                  {isLoading ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
