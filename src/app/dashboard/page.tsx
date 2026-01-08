@@ -279,7 +279,7 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card> */}
-
+    
         {/* Bar Chart */}
         {/* <Card className="border-slate-200 dark:border-slate-700">
           <CardHeader className="p-4 sm:p-6">
