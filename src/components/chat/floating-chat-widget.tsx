@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { hasPermission } from '@/lib/permissions';
 
 interface Message {
   id: number;
@@ -58,6 +59,11 @@ export default function FloatingChatWidget() {
 
   const totalUnread = mockConversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
   const activeConversation = mockConversations.find(c => c.id === selectedConversation);
+
+  // Check if user has permission to access chat
+  if (!hasPermission('allow chats')) {
+    return null;
+  }
 
   const handleSendMessage = () => {
     if (messageInput.trim() && selectedConversation) {

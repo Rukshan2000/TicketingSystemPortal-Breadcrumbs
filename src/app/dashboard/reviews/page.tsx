@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { hasPermission } from '@/lib/permissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,13 @@ import { toast } from 'sonner';
 
 export default function ReviewsPage() {
   const user = useSelector((state: RootState) => state.auth.user);
-  const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
+  
+  // Check permissions
+  const canViewAllReviews = hasPermission('view all reviews');
+  
+  // Set default view mode based on permissions
+  const defaultViewMode = canViewAllReviews ? 'all' : 'my';
+  
   const [ratingFilter, setRatingFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -46,12 +53,12 @@ export default function ReviewsPage() {
   // Fetch reviews based on filters
   const { data: allReviewsData, isLoading: isLoadingAll, refetch: refetchAll } = useGetReviewsQuery(
     { page, limit },
-    { skip: viewMode !== 'all' || ratingFilter !== 'all' || statusFilter !== 'all' }
+    { skip: defaultViewMode !== 'all' || ratingFilter !== 'all' || statusFilter !== 'all' }
   );
 
   const { data: myReviewsData, isLoading: isLoadingMy, refetch: refetchMy } = useGetReviewsByCustomerQuery(
     { customerId: user?.id || 0, page, limit },
-    { skip: viewMode !== 'my' || !user?.id || ratingFilter !== 'all' || statusFilter !== 'all' }
+    { skip: defaultViewMode !== 'my' || !user?.id || ratingFilter !== 'all' || statusFilter !== 'all' }
   );
 
   const { data: ratingFilteredData, isLoading: isLoadingRating } = useGetReviewsByRatingQuery(
@@ -73,7 +80,7 @@ export default function ReviewsPage() {
   const reviewsData = 
     ratingFilter !== 'all' ? ratingFilteredData :
     statusFilter !== 'all' ? statusFilteredData :
-    viewMode === 'my' ? myReviewsData :
+    defaultViewMode === 'my' ? myReviewsData :
     allReviewsData;
 
   const isLoading = isLoadingAll || isLoadingMy || isLoadingRating || isLoadingStatus;
@@ -104,7 +111,7 @@ export default function ReviewsPage() {
       await deleteReview(deleteReviewId).unwrap();
       toast.success('Review deleted successfully!');
       setDeleteReviewId(null);
-      if (viewMode === 'all') refetchAll();
+      if (defaultViewMode === 'all') refetchAll();
       else refetchMy();
     } catch (error) {
       toast.error('Failed to delete review');
@@ -220,24 +227,10 @@ export default function ReviewsPage() {
             </span>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === 'all' ? 'default' : 'outline'}
+                variant="default"
                 size="sm"
-                onClick={() => {
-                  setViewMode('all');
-                  setPage(1);
-                }}
               >
-                All Reviews
-              </Button>
-              <Button
-                variant={viewMode === 'my' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setViewMode('my');
-                  setPage(1);
-                }}
-              >
-                My Reviews
+                {canViewAllReviews ? 'All Reviews' : 'My Reviews'}
               </Button>
             </div>
           </div>
@@ -251,6 +244,9 @@ export default function ReviewsPage() {
               </label>
               <Select value={ratingFilter} onValueChange={(value) => {
                 setRatingFilter(value);
+                if (value !== 'all') {
+                  setStatusFilter('all'); // Reset status filter when rating filter is selected
+                }
                 setPage(1);
               }}>
                 <SelectTrigger>
@@ -274,6 +270,9 @@ export default function ReviewsPage() {
               </label>
               <Select value={statusFilter} onValueChange={(value) => {
                 setStatusFilter(value);
+                if (value !== 'all') {
+                  setRatingFilter('all'); // Reset rating filter when status filter is selected
+                }
                 setPage(1);
               }}>
                 <SelectTrigger>
@@ -310,7 +309,7 @@ export default function ReviewsPage() {
       <Card className="border-slate-200 dark:border-slate-700">
         <CardHeader>
           <CardTitle>
-            {viewMode === 'my' ? 'My Reviews' : 'All Reviews'}
+            {canViewAllReviews ? 'All Reviews' : 'My Reviews'}
             {reviewsData && (
               <span className="text-sm font-normal text-slate-500 ml-2">
                 ({reviewsData.total} total)
@@ -327,7 +326,7 @@ export default function ReviewsPage() {
             <div className="text-center py-12 text-slate-500">
               <p className="text-lg font-medium">No reviews found</p>
               <p className="text-sm mt-1">
-                {viewMode === 'my' 
+                {!canViewAllReviews 
                   ? "You haven't submitted any reviews yet" 
                   : "No reviews match your filters"}
               </p>
@@ -386,7 +385,7 @@ export default function ReviewsPage() {
                           <Badge className={getStatusColor(review.status)}>
                             {review.status}
                           </Badge>
-                          {viewMode === 'my' && (
+                          {!canViewAllReviews && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -403,7 +402,7 @@ export default function ReviewsPage() {
                       {review.comment && (
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
                           <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            "{review.comment}"
+                            &ldquo;{review.comment}&rdquo;
                           </p>
                         </div>
                       )}

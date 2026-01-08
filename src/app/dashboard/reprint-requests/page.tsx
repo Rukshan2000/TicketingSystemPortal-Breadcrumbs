@@ -1009,7 +1009,7 @@ export default function ReprintRequestsPage() {
               {/* Print Instructions */}
               <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <p className="text-sm text-blue-900 dark:text-blue-100">
-                  <strong>Tip:</strong> Use the "Print Document" button below or your browser's print function (Ctrl+P or Cmd+P) to print or save as PDF.
+                  <strong>Tip:</strong> Use the &ldquo;Print Document&rdquo; button below or your browser&apos;s print function (Ctrl+P or Cmd+P) to print or save as PDF.
                 </p>
               </div>
             </div>

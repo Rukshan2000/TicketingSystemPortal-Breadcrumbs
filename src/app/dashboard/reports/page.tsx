@@ -52,30 +52,39 @@ import {
 } from '@/store/services/reportApi';
 import type { ColumnSelection, FilterCondition, OrderByClause } from '@/types/report';
 import { toast } from 'sonner';
+import { hasPermission } from '@/lib/permissions';
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-  });
-  
-  // Ticket Summary State
-  const [ticketGroupBy, setTicketGroupBy] = useState<'status' | 'category' | 'priority'>('category');
-  
-  // User Activity State
-  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
-  
-  // Custom Report State
-  const [baseTable, setBaseTable] = useState<string>('');
+  // Check permissions first
+  const canViewTicketReports = hasPermission('view ticket reports');
+  const canViewUserReports = hasPermission('view user reports');
+  const canViewWorkflowReports = hasPermission('view workflow reports');
+  const canViewReviewReports = hasPermission('view review reports');
+  const canCreateCustomReports = hasPermission('create custom reports');
+
+  // State declarations
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [ticketGroupBy, setTicketGroupBy] = useState<'status' | 'category' | 'priority'>('status');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [baseTable, setBaseTable] = useState('');
   const [selectedJoins, setSelectedJoins] = useState<string[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<ColumnSelection[]>([]);
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [orderBy, setOrderBy] = useState<OrderByClause[]>([]);
   const [reportLimit, setReportLimit] = useState(100);
-  
-  // Custom Report Results
-  const [reportResults, setReportResults] = useState<any[] | null>(null);
+  const [reportResults, setReportResults] = useState<any[]>([]);
+
+  // Set default active tab based on available permissions
+  const getDefaultTab = () => {
+    if (canViewTicketReports) return 'tickets';
+    if (canViewUserReports) return 'users';
+    if (canViewWorkflowReports) return 'workflows';
+    if (canViewReviewReports) return 'reviews';
+    if (canCreateCustomReports) return 'custom';
+    return 'tickets'; // fallback
+  };
+
+  const [activeTab, setActiveTab] = useState(getDefaultTab());
   
   // API Queries
   const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(dateRange);
@@ -244,31 +253,37 @@ export default function ReportsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2 h-auto p-2">
-          <TabsTrigger value="dashboard" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="gap-2">
-            <Ticket className="w-4 h-4" />
-            <span className="hidden sm:inline">Tickets</span>
-          </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Users</span>
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="gap-2">
-            <GitBranch className="w-4 h-4" />
-            <span className="hidden sm:inline">Workflows</span>
-          </TabsTrigger>
-          <TabsTrigger value="reviews" className="gap-2">
-            <Star className="w-4 h-4" />
-            <span className="hidden sm:inline">Reviews</span>
-          </TabsTrigger>
-          <TabsTrigger value="custom" className="gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Custom</span>
-          </TabsTrigger>
+        <TabsList className="grid gap-2 h-auto p-2" style={{ gridTemplateColumns: `repeat(${[canViewTicketReports, canViewUserReports, canViewWorkflowReports, canViewReviewReports, canCreateCustomReports].filter(Boolean).length}, 1fr)` }}>
+          {canViewTicketReports && (
+            <TabsTrigger value="tickets" className="gap-2">
+              <Ticket className="w-4 h-4" />
+              <span className="hidden sm:inline">Tickets</span>
+            </TabsTrigger>
+          )}
+          {canViewUserReports && (
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+          )}
+          {canViewWorkflowReports && (
+            <TabsTrigger value="workflows" className="gap-2">
+              <GitBranch className="w-4 h-4" />
+              <span className="hidden sm:inline">Workflows</span>
+            </TabsTrigger>
+          )}
+          {canViewReviewReports && (
+            <TabsTrigger value="reviews" className="gap-2">
+              <Star className="w-4 h-4" />
+              <span className="hidden sm:inline">Reviews</span>
+            </TabsTrigger>
+          )}
+          {canCreateCustomReports && (
+            <TabsTrigger value="custom" className="gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Custom</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Dashboard Tab */}
@@ -405,7 +420,8 @@ export default function ReportsPage() {
         </TabsContent>
 
         {/* Tickets Tab */}
-        <TabsContent value="tickets" className="space-y-6">
+        {canViewTicketReports && (
+          <TabsContent value="tickets" className="space-y-6">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -472,9 +488,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Users Tab */}
-        <TabsContent value="users" className="space-y-6">
+        {canViewUserReports && (
+          <TabsContent value="users" className="space-y-6">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -545,9 +563,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Workflows Tab */}
-        <TabsContent value="workflows" className="space-y-6">
+        {canViewWorkflowReports && (
+          <TabsContent value="workflows" className="space-y-6">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <CardTitle>Workflow Performance Report</CardTitle>
@@ -606,9 +626,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Reviews Tab */}
-        <TabsContent value="reviews" className="space-y-6">
+        {canViewReviewReports && (
+          <TabsContent value="reviews" className="space-y-6">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <CardTitle>Reviews Analytics</CardTitle>
@@ -706,9 +728,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Custom Report Tab */}
-        <TabsContent value="custom" className="space-y-6">
+        {canCreateCustomReports && (
+          <TabsContent value="custom" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Report Builder */}
             <Card className="lg:col-span-1 border-slate-200 dark:border-slate-700">
@@ -960,7 +984,7 @@ export default function ReportsPage() {
                     <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="text-lg font-medium">No report data</p>
                     <p className="text-sm mt-1">
-                      Configure your report in the builder and click "Run Report"
+                      Configure your report in the builder and click &quot;Run Report&quot;
                     </p>
                   </div>
                 )}
@@ -968,6 +992,7 @@ export default function ReportsPage() {
             </Card>
           </div>
         </TabsContent>
+        )}
       </Tabs>
     </div>
   );

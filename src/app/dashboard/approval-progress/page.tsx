@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { hasPermission } from '@/lib/permissions';
 import { useGetTicketApprovalProgressQuery, useGetApprovalProgressSummaryQuery, useGetApprovalProgressSummaryByCustomerQuery } from '@/store/services/approvalProgressApi';
 import { useGetTicketsQuery } from '@/store/services/ticketApi';
 import { Card } from '@/components/ui/card';
@@ -19,10 +20,16 @@ interface WorkflowProgress {
 
 export default function ApprovalProgressPage() {
   const user = useSelector((state: RootState) => state.auth.user);
+  
+  // Check permissions
+  const canViewAllProgress = hasPermission('view all progress');
+  
+  // Set default filter mode based on permissions
+  const defaultFilterMode = canViewAllProgress ? 'all' : 'my';
+  
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
-  const [filterMode, setFilterMode] = useState<'all' | 'my'>('all');
 
   // Fetch tickets with workflows from approval progress summary
   const { data: summaryData, isLoading: summaryLoading } = useGetApprovalProgressSummaryQuery({
@@ -61,11 +68,11 @@ export default function ApprovalProgressPage() {
     }
   };
 
-  const ticketsWithWorkflows = filterMode === 'my' 
+  const ticketsWithWorkflows = defaultFilterMode === 'my' 
     ? (customerData?.data || [])
     : (summaryData?.data || []);
 
-  const isLoading = filterMode === 'my' ? customerLoading : summaryLoading;
+  const isLoading = defaultFilterMode === 'my' ? customerLoading : summaryLoading;
 
   // Filter tickets by approval status
   const approvedTickets = ticketsWithWorkflows.filter(
@@ -113,18 +120,10 @@ export default function ApprovalProgressPage() {
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show:</span>
         <div className="flex gap-2">
           <Button
-            variant={filterMode === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilterMode('all')}
+            variant="default"
             className="transition-all"
           >
-            All Tickets
-          </Button>
-          <Button
-            variant={filterMode === 'my' ? 'default' : 'outline'}
-            onClick={() => setFilterMode('my')}
-            className="transition-all"
-          >
-            My Tickets
+            {canViewAllProgress ? 'All Tickets' : 'My Tickets'}
           </Button>
         </div>
       </div>
@@ -135,12 +134,12 @@ export default function ApprovalProgressPage() {
         <div className="text-center text-gray-500 py-8">
           <FileText className="w-16 h-16 mx-auto mb-4 text-slate-300" />
           <p className="text-lg font-medium">
-            {filterMode === 'my' 
+            {!canViewAllProgress 
               ? 'No tickets created by you with workflows found' 
               : 'No tickets with workflows found'}
           </p>
           <p className="text-sm mt-1">
-            {filterMode === 'my'
+            {!canViewAllProgress
               ? 'Create tickets and assign workflows to track their approval progress'
               : 'Assign workflows to tickets to track their approval progress'}
           </p>
@@ -290,7 +289,7 @@ export default function ApprovalProgressPage() {
                   {approvedTickets.map((ticket: any) => (
                     <Card
                       key={ticket.id || ticket.ticket_id}
-                      className="p-4 cursor-pointer transition-all hover:shadow-lg dark:border-slate-700 border-green-200 dark:border-green-900"
+                      className="p-4 cursor-pointer transition-all hover:shadow-lg border-green-200 dark:border-green-900"
                     >
                       <div className="space-y-3">
                         {/* Header with Subject and Status */}

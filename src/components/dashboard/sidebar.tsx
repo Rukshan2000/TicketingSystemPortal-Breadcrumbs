@@ -28,55 +28,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import LogoLg from '@/assets/logo_2.png';
 import LogoSm from '@/assets/logo_1.png';
+import { hasPermission } from '@/lib/permissions';
 
-
-const menuItems = [
-  {
-    title: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/dashboard',
-  },
-  {
-    title: 'Messages',
-    icon: MessageCircle,
-    href: '/dashboard/chat',
-  },
-  {
-    title: 'Create Ticket',
-    icon: Plus,
-    href: '/dashboard/create-ticket',
-  },
-  {
-    title: 'Tickets',
-    icon: FileText,
-    href: '/dashboard/tickets',
-  },
-  {
-    title: 'Reviews',
-    icon: Star,
-    href: '/dashboard/reviews',
-  },
-  {
-    title: 'Reports',
-    icon: BarChart3,
-    href: '/dashboard/reports',
-  },
-  {
-    title: 'Workflows',
-    icon: GitBranch,
-    href: '/dashboard/workflows',
-  },
-  {
-    title: 'Approval Progress',
-    icon: TrendingUp,
-    href: '/dashboard/approval-progress',
-  },
-  {
-    title: 'User Management',
-    icon: Users,
-    href: '/dashboard/users',
-  },
-];
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -84,6 +37,55 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
+
+  // Define menu items with manual permission checks
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/dashboard',
+    },
+    ...(hasPermission('allow chats') ? [{
+      title: 'Messages',
+      icon: MessageCircle,
+      href: '/dashboard/chat',
+    }] : []),
+    ...(hasPermission('create ticket') ? [{
+      title: 'Create Ticket',
+      icon: Plus,
+      href: '/dashboard/create-ticket',
+    }] : []),
+    {
+      title: 'Tickets',
+      icon: FileText,
+      href: '/dashboard/tickets',
+    },
+    {
+      title: 'Reviews',
+      icon: Star,
+      href: '/dashboard/reviews',
+    },
+    ...(hasPermission('view ticket reports') || hasPermission('view user reports') || hasPermission('view workflow reports') || hasPermission('view review reports') || hasPermission('create custom reports') ? [{
+      title: 'Reports',
+      icon: BarChart3,
+      href: '/dashboard/reports',
+    }] : []),
+    {
+      title: 'Workflows',
+      icon: GitBranch,
+      href: '/dashboard/workflows',
+    },
+    {
+      title: 'Approval Progress',
+      icon: TrendingUp,
+      href: '/dashboard/approval-progress',
+    },
+    {
+      title: 'User Management',
+      icon: Users,
+      href: '/dashboard/users',
+    },
+  ];
 
   // Close mobile menu on route change
   useEffect(() => {

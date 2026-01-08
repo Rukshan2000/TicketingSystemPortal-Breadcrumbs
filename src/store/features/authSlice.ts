@@ -7,6 +7,11 @@ export interface User {
   username: string;
   email: string;
   role: number | string;
+  type?: string;
+  permissions?: Array<{
+    id: number;
+    name: string;
+  }>;
   status: string;
   phone?: string;
   department?: string;

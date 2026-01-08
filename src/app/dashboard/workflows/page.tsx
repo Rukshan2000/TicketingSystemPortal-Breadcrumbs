@@ -59,6 +59,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { hasPermission } from '@/lib/permissions';
 
 export default function WorkflowsPage() {
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number | null>(null);
@@ -80,6 +81,16 @@ export default function WorkflowsPage() {
   const [nodeOrder, setNodeOrder] = useState(1);
 
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+
+  // Check permissions
+  const canViewWorkflow = hasPermission('view workflow');
+  const canCreateWorkflow = hasPermission('create workflow');
+  const canEditWorkflow = hasPermission('edit workflow');
+  const canDeleteWorkflow = hasPermission('delete workflow');
+  const canAssignUserToWorkflow = hasPermission('assign user to workflow');
+  const canAddStage = hasPermission('add stage');
+  const canEditApproveStage = hasPermission('edit approve stage');
+  const canDeleteApproveStage = hasPermission('delete approve stage');
 
   // Queries
   const { data: workflowsData, isLoading: loadingWorkflows } = useGetWorkflowsQuery();
@@ -260,10 +271,12 @@ export default function WorkflowsPage() {
             Configure approval workflows with hierarchical stages
           </p>
         </div>
-        <Button onClick={openCreateWorkflow} className="gap-2">
-          <Plus className="w-4 h-4" />
-          New Workflow
-        </Button>
+        {canCreateWorkflow && (
+          <Button onClick={openCreateWorkflow} className="gap-2">
+            <Plus className="w-4 h-4" />
+            New Workflow
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -316,9 +329,11 @@ export default function WorkflowsPage() {
               <div className="text-center py-8 text-slate-500">
                 <GitBranch className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                 <p>No workflows created yet</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={openCreateWorkflow}>
-                  Create First Workflow
-                </Button>
+                {canCreateWorkflow && (
+                  <Button variant="outline" size="sm" className="mt-3" onClick={openCreateWorkflow}>
+                    Create First Workflow
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -340,23 +355,27 @@ export default function WorkflowsPage() {
               </div>
               {selectedWorkflow && (
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditWorkflow(selectedWorkflow)}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteWorkflow(selectedWorkflow.id)}
-                    disabled={deleting}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {canEditWorkflow && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditWorkflow(selectedWorkflow)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteWorkflow && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteWorkflow(selectedWorkflow.id)}
+                      disabled={deleting}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -392,10 +411,12 @@ export default function WorkflowsPage() {
                 {/* Approval Stages */}
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">Approval Stages</h3>
-                  <Button size="sm" onClick={openCreateNode} className="gap-1">
-                    <Plus className="w-4 h-4" />
-                    Add Stage
-                  </Button>
+                  {canAddStage && (
+                    <Button size="sm" onClick={openCreateNode} className="gap-1">
+                      <Plus className="w-4 h-4" />
+                      Add Stage
+                    </Button>
+                  )}
                 </div>
 
                 {selectedWorkflow.nodes && selectedWorkflow.nodes.length > 0 ? (
@@ -426,32 +447,38 @@ export default function WorkflowsPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openUserDialog(node)}
-                                  title="Manage Users"
-                                >
-                                  <UserPlus className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditNode(node)}
-                                  title="Edit Stage"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() => handleDeleteNode(node.id)}
-                                  disabled={deletingNode}
-                                  title="Delete Stage"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                {canAssignUserToWorkflow && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openUserDialog(node)}
+                                    title="Manage Users"
+                                  >
+                                    <UserPlus className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                {canEditApproveStage && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditNode(node)}
+                                    title="Edit Stage"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                {canDeleteApproveStage && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => handleDeleteNode(node.id)}
+                                    disabled={deletingNode}
+                                    title="Delete Stage"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
                             {node.description && (

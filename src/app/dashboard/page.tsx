@@ -10,6 +10,7 @@ import { Loader2, FileText, AlertCircle, Plus, Eye, TrendingUp } from 'lucide-re
 import { useGetTicketsQuery, useGetTicketCountQuery, useGetTicketsByCustomerQuery } from '@/store/services/ticketApi';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+import { hasPermission } from '@/lib/permissions';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
@@ -117,13 +118,15 @@ export default function DashboardPage() {
 
       {/* Quick Action Shortcuts */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <Button
-          onClick={() => router.push('/dashboard/create-ticket')}
-          className="h-auto flex flex-col items-center justify-center py-4 gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="text-sm sm:text-base font-semibold">Create New Ticket</span>
-        </Button>
+        {hasPermission('create ticket') && (
+          <Button
+            onClick={() => router.push('/dashboard/create-ticket')}
+            className="h-auto flex flex-col items-center justify-center py-4 gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-sm sm:text-base font-semibold">Create New Ticket</span>
+          </Button>
+        )}
         <Button
           onClick={() => router.push('/dashboard/tickets')}
           variant="outline"

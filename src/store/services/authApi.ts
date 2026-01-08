@@ -30,6 +30,11 @@ export interface LoginResponse {
       first_name: string;
       last_name: string;
       role: string;
+      type: string;
+      permissions: Array<{
+        id: number;
+        name: string;
+      }>;
       status: string;
       phone?: string;
       department?: string;
