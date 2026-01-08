@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Star,
   BarChart3,
+  Server,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -84,6 +85,11 @@ export function Sidebar() {
       title: 'User Management',
       icon: Users,
       href: '/dashboard/users',
+    },
+    {
+      title: 'Systems',
+      icon: Server,
+      href: '/dashboard/systems',
     },
   ];
 
