@@ -1,0 +1,404 @@
+# Report Export Architecture
+
+## Component Hierarchy
+
+```
+Reports Page (/dashboard/reports)
+├── ReportLetterhead Component
+│   ├── Organization Header
+│   ├── Contact Information
+│   ├── Report Metadata
+│   └── Disclaimer
+│
+├── Report Tabs
+│   ├── Tickets Tab
+│   │   ├── Report Header with Export Buttons
+│   │   │   ├── CSV Button → exportReportToCSV()
+│   │   │   └── PDF Button → handleExportPDF()
+│   │   └── Data Table
+│   │
+│   ├── Users Tab
+│   │   ├── Report Header with Export Buttons
+│   │   │   ├── CSV Button → exportReportToCSV()
+│   │   │   └── PDF Button → handleExportPDF()
+│   │   └── Data Table
+│   │
+│   ├── Workflows Tab
+│   │   ├── Report Header
+│   │   └── Data Table
+│   │
+│   ├── Reviews Tab
+│   │   ├── Report Header
+│   │   └── Data Table
+│   │
+│   └── Custom Tab
+│       ├── Report Builder (left)
+│       ├── Report Results (right)
+│       │   ├── PDF Button → handleExportPDF()
+│       │   └── CSV Button → handleExportCSV()
+│       └── Data Table
+```
+
+## Export Flow Diagram
+
+```
+User Clicks Export Button
+│
+├─ CSV Export
+│  │
+│  ├─ Prepare Data Array
+│  │  ├─ Transform data format
+│  │  └─ Escape special characters
+│  │
+│  ├─ Create CSV Content
+│  │  ├─ Generate headers row
+│  │  └─ Generate data rows
+│  │
+│  ├─ Create Blob
+│  │  └─ type: 'text/csv'
+│  │
+│  └─ Download File
+│     └─ Show toast notification
+│
+└─ PDF Export
+   │
+   ├─ Generate Letterhead HTML
+   │  ├─ Organization details
+   │  └─ Contact information
+   │
+   ├─ Generate Content HTML
+   │  ├─ Report title
+   │  ├─ Metadata (dates, filters)
+   │  ├─ Data table
+   │  └─ Professional formatting
+   │
+   ├─ Create Complete Document
+   │  ├─ Combine letterhead + content
+   │  ├─ Apply print styles
+   │  └─ Set up page layout
+   │
+   ├─ Open Print Window
+   │  └─ window.open() with HTML content
+   │
+   ├─ Display Print Dialog
+   │  ├─ User selects "Save as PDF"
+   │  └─ User chooses location
+   │
+   └─ Show Notification
+      └─ Toast message confirming export
+```
+
+## File Structure
+
+```
+src/
+├── app/
+│   ├── dashboard/
+│   │   └── reports/
+│   │       └── page.tsx ................... Main reports page (MODIFIED)
+│   └── globals.css ........................ Global styles (MODIFIED)
+│
+├── components/
+│   └── reports/
+│       └── report-letterhead.tsx ........... Letterhead component (NEW)
+│
+├── lib/
+│   └── pdfExport.ts ....................... PDF/CSV utilities (NEW)
+│
+├── styles/
+│   └── print.css .......................... Print media styles (NEW)
+│
+└── [other existing files]
+
+Documentation/
+├── REPORT_EXPORT_GUIDE.md ................ Complete documentation (NEW)
+├── REPORT_EXPORT_SUMMARY.md ............. Quick reference (NEW)
+├── LETTERHEAD_CUSTOMIZATION_GUIDE.md ... Customization guide (NEW)
+├── REPORT_IMPLEMENTATION_CHECKLIST.md .. Implementation status (NEW)
+└── REPORT_ARCHITECTURE.md ............... This file (NEW)
+```
+
+## Data Flow
+
+### CSV Export Data Flow
+```
+Report Data (Array of Objects)
+│
+├─ Format Rows
+│  ├─ Map each column
+│  ├─ Escape quotes
+│  └─ Wrap in quotes if needed
+│
+├─ Create CSV String
+│  ├─ Headers (first row)
+│  └─ Data rows (subsequent rows)
+│
+├─ Create Blob
+│  └─ text/csv;charset=utf-8
+│
+├─ Create Download Link
+│  └─ ObjectURL
+│
+└─ Trigger Download
+   └─ filename: report_${timestamp}.csv
+```
+
+### PDF Export Data Flow
+```
+Report Data → HTML Generation
+│
+├─ Letterhead HTML
+│  ├─ Organization name
+│  ├─ Contact info
+│  ├─ Report metadata
+│  └─ Disclaimer
+│
+├─ Content HTML
+│  ├─ Report title
+│  ├─ Date range info
+│  ├─ Data table with styling
+│  └─ Footer
+│
+├─ Complete Document
+│  ├─ DOCTYPE declaration
+│  ├─ Head (styles)
+│  │  └─ Print media styles
+│  └─ Body
+│     ├─ Letterhead section
+│     ├─ Content section
+│     └─ Footer
+│
+├─ Print Dialog
+│  ├─ window.open()
+│  ├─ document.write(html)
+│  └─ window.print()
+│
+└─ Browser Handles
+   ├─ Print preview
+   ├─ Printer selection
+   ├─ PDF save option
+   └─ File download
+```
+
+## Utility Functions
+
+### Core Export Functions
+```
+pdfExport.ts
+├─ exportReportToPDF()
+│  ├─ Creates print styles
+│  ├─ Generates HTML content
+│  ├─ Opens print dialog
+│  └─ Handles cleanup
+│
+├─ exportReportToCSV()
+│  ├─ Formats data array
+│  ├─ Escapes special chars
+│  ├─ Creates CSV string
+│  └─ Triggers download
+│
+├─ formatTableForPDF()
+│  ├─ Converts array to HTML table
+│  ├─ Applies styling
+│  └─ Returns formatted HTML
+│
+└─ createPrintDocument()
+   ├─ Combines letterhead + content
+   ├─ Adds print styles
+   ├─ Sets page layout
+   └─ Returns complete HTML document
+```
+
+## Style Layers
+
+```
+CSS Hierarchy
+│
+├─ globals.css (Main styles)
+│  └─ @import 'styles/print.css'
+│
+├─ print.css (@media print styles)
+│  ├─ Page setup (@page)
+│  ├─ Color overrides (black text, white bg)
+│  ├─ Table styles
+│  ├─ Typography
+│  ├─ Page breaks
+│  └─ Print-specific classes
+│
+└─ Inline Styles (in print document)
+   ├─ Generated by createPrintDocument()
+   ├─ Applied to elements directly
+   └─ Used for fine-tuned formatting
+```
+
+## Browser Print API Integration
+
+```
+Browser Print System
+│
+├─ Print Dialog
+│  ├─ User opens via Ctrl+P or button
+│  ├─ Shows preview
+│  └─ Allows customization
+│
+├─ Print Options
+│  ├─ Printer selection
+│  ├─ Paper size (A4, Letter, etc.)
+│  ├─ Orientation (Portrait/Landscape)
+│  ├─ Margins
+│  ├─ Scale
+│  ├─ Header/Footer toggle
+│  └─ Background graphics
+│
+├─ PDF Conversion
+│  ├─ "Save as PDF" printer option
+│  ├─ File naming
+│  └─ Download location
+│
+└─ Output
+   └─ PDF file (black & white)
+```
+
+## State Management in Reports Page
+
+```
+Reports Page State
+│
+├─ User State
+│  └─ currentUser { name, email }
+│
+├─ Filter State
+│  ├─ dateRange { startDate, endDate }
+│  ├─ ticketGroupBy
+│  └─ userRoleFilter
+│
+├─ Query State
+│  └─ baseTable, selectedJoins, selectedColumns, filters, orderBy
+│
+├─ Result State
+│  ├─ reportResults (array of objects)
+│  └─ activeTab
+│
+└─ Loading State
+   ├─ isDashboardLoading
+   ├─ isTicketLoading
+   ├─ isUserLoading
+   ├─ isWorkflowLoading
+   ├─ isReviewsLoading
+   └─ isExecutingReport
+```
+
+## Export Button Integration
+
+```
+Each Report Tab
+│
+├─ Header
+│  ├─ Title
+│  ├─ Filter/Sort Controls
+│  └─ Export Buttons Row
+│     ├─ CSV Button
+│     │  ├─ Icon: Download
+│     │  ├─ Label: "CSV"
+│     │  └─ onClick: handleExportCSV()
+│     │
+│     └─ PDF Button
+│        ├─ Icon: FileJson
+│        ├─ Label: "PDF"
+│        └─ onClick: handleExportPDF()
+│
+└─ Content
+   └─ Data Table
+```
+
+## Black & White Output Guarantee
+
+```
+Print Media (@media print)
+│
+├─ Color Properties
+│  └─ All colors overridden to black/white
+│
+├─ Backgrounds
+│  └─ All backgrounds forced to white
+│
+├─ Borders
+│  └─ All borders set to black
+│
+├─ Text
+│  └─ All text set to black
+│
+├─ Typography
+│  ├─ Font family specified
+│  ├─ Font sizes defined
+│  └─ Line heights set
+│
+├─ Layout
+│  ├─ Page size: A4
+│  ├─ Margins: 15mm
+│  ├─ Page breaks: automatic
+│  └─ Orientation: portrait
+│
+└─ Elements
+   ├─ Tables: bordered style
+   ├─ Headers: bold, underlined
+   ├─ Rows: alternating format
+   └─ Content: readable sizing
+```
+
+## Error Handling
+
+```
+Export Operations
+│
+├─ CSV Export
+│  ├─ Check data length
+│  ├─ Validate array format
+│  └─ Handle special characters
+│
+├─ PDF Export
+│  ├─ Verify data exists
+│  ├─ Check window.open() success
+│  ├─ Handle print dialog interaction
+│  └─ Cleanup resources
+│
+└─ User Feedback
+   ├─ Toast notifications
+   ├─ Error messages
+   ├─ Success confirmations
+   └─ Loading states
+```
+
+## Performance Considerations
+
+```
+Optimization
+│
+├─ Client-side Processing
+│  ├─ No server calls for export
+│  ├─ Instant generation
+│  └─ Reduced bandwidth
+│
+├─ Memory Management
+│  ├─ Blob cleanup after download
+│  ├─ Document cleanup after print
+│  └─ No persistent state
+│
+├─ Browser Native
+│  ├─ Native print API
+│  ├─ No external libraries
+│  ├─ Minimal overhead
+│  └─ Fast execution
+│
+└─ Scalability
+   ├─ Works with large datasets
+   ├─ Pagination for custom reports
+   ├─ Limit control (10-1000 rows)
+   └─ Export only visible/selected data
+```
+
+---
+
+**Created**: January 8, 2026
+**Version**: 1.0
+**Status**: Complete

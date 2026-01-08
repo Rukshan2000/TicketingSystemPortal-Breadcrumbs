@@ -40,7 +40,10 @@ import {
   Clock,
   XCircle,
   Filter,
+  FileJson,
 } from 'lucide-react';
+import { ReportLetterhead } from '@/components/reports/report-letterhead';
+import { exportReportToCSV, formatTableForPDF, createPrintDocument } from '@/lib/pdfExport';
 import {
   useGetDashboardSummaryQuery,
   useGetTicketSummaryQuery,
@@ -73,6 +76,7 @@ export default function ReportsPage() {
   const [orderBy, setOrderBy] = useState<OrderByClause[]>([]);
   const [reportLimit, setReportLimit] = useState(100);
   const [reportResults, setReportResults] = useState<any[]>([]);
+  const [currentUser] = useState({ name: 'Administrator', email: 'admin@organization.com' });
 
   // Set default active tab based on available permissions
   const getDefaultTab = () => {
@@ -155,22 +159,73 @@ export default function ReportsPage() {
   const handleExportCSV = () => {
     if (!reportResults || reportResults.length === 0) return;
     
-    const headers = Object.keys(reportResults[0]);
-    const csvContent = [
-      headers.join(','),
-      ...reportResults.map(row => 
-        headers.map(h => `"${row[h] ?? ''}"`).join(',')
-      )
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `report_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `report_${Date.now()}.csv`;
+    exportReportToCSV(reportResults, filename);
     toast.success('Report exported as CSV');
+  };
+
+  const handleExportPDF = () => {
+    if (!reportResults || reportResults.length === 0) return;
+
+    // Create letterhead HTML
+    const letterheadDiv = document.createElement('div');
+    const root = document.createElement('div');
+    
+    // Create table HTML for PDF
+    const headers = Object.keys(reportResults[0]);
+    const tableHTML = `
+      <h2 style="margin-top: 20px; margin-bottom: 15px; font-size: 18px; font-weight: bold;">
+        ${activeTab === 'tickets' ? 'Ticket Summary Report' :
+          activeTab === 'users' ? 'User Activity Report' :
+          activeTab === 'workflows' ? 'Workflow Performance Report' :
+          activeTab === 'reviews' ? 'Reviews Analytics Report' :
+          'Custom Report'}
+      </h2>
+      <p style="margin-bottom: 15px; font-size: 12px; color: #666;">
+        Date Range: ${dateRange.startDate ? dateRange.startDate : 'All'} to ${dateRange.endDate ? dateRange.endDate : 'All'}
+      </p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px;">
+        <thead>
+          <tr style="background: white; border-bottom: 2px solid black;">
+            ${headers.map(h => `<th style="padding: 10px; border: 1px solid black; text-align: left; font-weight: bold;">${h}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${reportResults.map((row, rIdx) => `
+            <tr style="background: ${rIdx % 2 === 0 ? 'white' : 'white'};">
+              ${headers.map(h => `<td style="padding: 8px; border: 1px solid black; text-align: left;">${row[h] !== null && row[h] !== undefined ? String(row[h]) : '-'}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Create complete print document
+    const letterheadHTML = `
+      <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">Support Ticket System</h1>
+      <p style="font-size: 12px; color: #666; margin-bottom: 5px;">Enterprise Support Management Platform</p>
+      <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 11px; color: #666;">
+        <span>📧 support@organization.com</span>
+        <span>📞 1-800-SUPPORT</span>
+        <span>🌐 www.organization.com</span>
+      </div>
+    `;
+
+    const fullHTML = createPrintDocument(letterheadHTML, tableHTML, 'Support Ticket Report');
+    
+    // Open print dialog for PDF export
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(fullHTML);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
+
+    toast.success('Report ready for PDF export. Use your browser\'s print dialog to save as PDF.');
   };
 
   const addColumn = (table: string, column: string) => {
@@ -205,6 +260,12 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Letterhead */}
+      <ReportLetterhead
+        title="Reports & Analytics"
+        generatedBy={currentUser.name}
+      />
+
       <div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           Reports & Analytics
@@ -425,17 +486,98 @@ export default function ReportsPage() {
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Ticket Summary Report</CardTitle>
-                <Select value={ticketGroupBy} onValueChange={(v) => setTicketGroupBy(v as any)}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="category">Group by Category</SelectItem>
-                    <SelectItem value="status">Group by Status</SelectItem>
-                    <SelectItem value="priority">Group by Priority</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <CardTitle>Ticket Summary Report</CardTitle>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Select value={ticketGroupBy} onValueChange={(v) => setTicketGroupBy(v as any)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="category">Group by Category</SelectItem>
+                      <SelectItem value="status">Group by Status</SelectItem>
+                      <SelectItem value="priority">Group by Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {ticketSummary?.summary && ticketSummary.summary.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const data = ticketSummary.summary.map(row => ({
+                            [ticketGroupBy]: row[ticketGroupBy as keyof typeof row] || 'N/A',
+                            'Total': row.count,
+                            'Open': row.open_count,
+                            'In Progress': row.in_progress_count,
+                            'Resolved': row.resolved_count,
+                            'Closed': row.closed_count,
+                          }));
+                          exportReportToCSV(data, `ticket-summary-${Date.now()}.csv`);
+                          toast.success('Report exported as CSV');
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const headers = [ticketGroupBy, 'Total', 'Open', 'In Progress', 'Resolved', 'Closed'];
+                          const tableHTML = `
+                            <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: bold;">Ticket Summary Report</h2>
+                            <p style="margin-bottom: 15px; font-size: 12px;">Grouped by: ${ticketGroupBy}</p>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px;">
+                              <thead>
+                                <tr style="background: white; border-bottom: 2px solid black;">
+                                  ${headers.map(h => `<th style="padding: 10px; border: 1px solid black; text-align: left; font-weight: bold;">${h}</th>`).join('')}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${ticketSummary.summary.map((row, idx) => `
+                                  <tr style="background: ${idx % 2 === 0 ? 'white' : 'white'};">
+                                    <td style="padding: 8px; border: 1px solid black;">${row[ticketGroupBy as keyof typeof row] || 'N/A'}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;"><strong>${row.count}</strong></td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${row.open_count}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${row.in_progress_count}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${row.resolved_count}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${row.closed_count}</td>
+                                  </tr>
+                                `).join('')}
+                              </tbody>
+                            </table>
+                          `;
+                          const letterheadHTML = `
+                            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">Support Ticket System</h1>
+                            <p style="font-size: 12px; color: #666; margin-bottom: 5px;">Enterprise Support Management Platform</p>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 11px; color: #666;">
+                              <span>📧 support@organization.com</span>
+                              <span>📞 1-800-SUPPORT</span>
+                              <span>🌐 www.organization.com</span>
+                            </div>
+                          `;
+                          const fullHTML = createPrintDocument(letterheadHTML, tableHTML, 'Ticket Summary Report');
+                          const printWindow = window.open('', '', 'width=800,height=600');
+                          if (printWindow) {
+                            printWindow.document.write(fullHTML);
+                            printWindow.document.close();
+                            printWindow.focus();
+                            setTimeout(() => {
+                              printWindow.print();
+                              printWindow.close();
+                            }, 250);
+                          }
+                          toast.success('Report ready for PDF export.');
+                        }}
+                      >
+                        <FileJson className="w-4 h-4 mr-2" />
+                        PDF
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -496,18 +638,102 @@ export default function ReportsPage() {
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>User Activity Report</CardTitle>
-                <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="moderator">Moderator</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <CardTitle>User Activity Report</CardTitle>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="moderator">Moderator</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {userActivity?.users && userActivity.users.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const data = userActivity.users.map(u => ({
+                            'Name': `${u.first_name} ${u.last_name}`,
+                            'Email': u.email,
+                            'Role': u.role,
+                            'Department': u.department || '-',
+                            'Tickets Created': u.tickets_created,
+                            'Approvals Made': u.approvals_made,
+                            'Approved': u.approvals_approved,
+                            'Rejected': u.approvals_rejected,
+                          }));
+                          exportReportToCSV(data, `user-activity-${Date.now()}.csv`);
+                          toast.success('Report exported as CSV');
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const headers = ['Name', 'Email', 'Role', 'Department', 'Tickets Created', 'Approvals Made', 'Approved', 'Rejected'];
+                          const tableHTML = `
+                            <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: bold;">User Activity Report</h2>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px;">
+                              <thead>
+                                <tr style="background: white; border-bottom: 2px solid black;">
+                                  ${headers.map(h => `<th style="padding: 10px; border: 1px solid black; text-align: left; font-weight: bold;">${h}</th>`).join('')}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${userActivity.users.map((user, idx) => `
+                                  <tr style="background: ${idx % 2 === 0 ? 'white' : 'white'};">
+                                    <td style="padding: 8px; border: 1px solid black;">${user.first_name} ${user.last_name}</td>
+                                    <td style="padding: 8px; border: 1px solid black;">${user.email}</td>
+                                    <td style="padding: 8px; border: 1px solid black;">${user.role}</td>
+                                    <td style="padding: 8px; border: 1px solid black;">${user.department || '-'}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${user.tickets_created}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right;">${user.approvals_made}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right; color: green;">${user.approvals_approved}</td>
+                                    <td style="padding: 8px; border: 1px solid black; text-align: right; color: red;">${user.approvals_rejected}</td>
+                                  </tr>
+                                `).join('')}
+                              </tbody>
+                            </table>
+                          `;
+                          const letterheadHTML = `
+                            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">Support Ticket System</h1>
+                            <p style="font-size: 12px; color: #666; margin-bottom: 5px;">Enterprise Support Management Platform</p>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 11px; color: #666;">
+                              <span>📧 support@organization.com</span>
+                              <span>📞 1-800-SUPPORT</span>
+                              <span>🌐 www.organization.com</span>
+                            </div>
+                          `;
+                          const fullHTML = createPrintDocument(letterheadHTML, tableHTML, 'User Activity Report');
+                          const printWindow = window.open('', '', 'width=800,height=600');
+                          if (printWindow) {
+                            printWindow.document.write(fullHTML);
+                            printWindow.document.close();
+                            printWindow.focus();
+                            setTimeout(() => {
+                              printWindow.print();
+                              printWindow.close();
+                            }, 250);
+                          }
+                          toast.success('Report ready for PDF export.');
+                        }}
+                      >
+                        <FileJson className="w-4 h-4 mr-2" />
+                        PDF
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -939,13 +1165,19 @@ export default function ReportsPage() {
             {/* Report Results */}
             <Card className="lg:col-span-2 border-slate-200 dark:border-slate-700">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <CardTitle>Report Results</CardTitle>
                   {reportResults && reportResults.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export CSV
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                        <FileJson className="w-4 h-4 mr-2" />
+                        Export PDF
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export CSV
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardHeader>
