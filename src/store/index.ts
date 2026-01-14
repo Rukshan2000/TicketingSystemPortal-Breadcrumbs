@@ -10,6 +10,7 @@ import { approvalProgressApi } from './services/approvalProgressApi';
 import { reviewApi } from './services/reviewApi';
 import { reportApi } from './services/reportApi';
 import { systemApi } from './services/systemApi';
+import { chatApi } from './services/chatApi';
 import authReducer from './features/authSlice';
 
 export const store = configureStore({
@@ -25,6 +26,7 @@ export const store = configureStore({
     [reviewApi.reducerPath]: reviewApi.reducer,
     [reportApi.reducerPath]: reportApi.reducer,
     [systemApi.reducerPath]: systemApi.reducer,
+    [chatApi.reducerPath]: chatApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -37,7 +39,8 @@ export const store = configureStore({
       .concat(approvalProgressApi.middleware)
       .concat(reviewApi.middleware)
       .concat(reportApi.middleware)
-      .concat(systemApi.middleware),
+      .concat(systemApi.middleware)
+      .concat(chatApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
